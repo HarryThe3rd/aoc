@@ -1,6 +1,11 @@
 const fs = require('fs');
 
-function readSchematicFromFile(filePath) {
+/**
+ * Reads the contents of a file and returns an array of its lines.
+ * @param {string} filePath - The path of the file to read.
+ * @returns {Array<string>} An array of lines from the file.
+ */
+function readLinesFromFile(filePath) {
     try {
         const data = fs.readFileSync(filePath, 'utf8');
         return data.split('\n');
@@ -10,30 +15,40 @@ function readSchematicFromFile(filePath) {
     }
 }
 
-function isSymbol(char) {
+/**
+ * Determines if a character is a symbol.
+ * @param {string} char - The character to check.
+ * @returns {boolean} True if the character is a symbol, false otherwise.
+ */
+function isSymbolCharacter(char) {
     return isNaN(char) && char !== '.';
 }
 
-function isNumber(char) {
+/**
+ * Determines if a character is a number.
+ * @param {string} char - The character to check.
+ * @returns {boolean} True if the character is a number, false otherwise.
+ */
+function isNumericCharacter(char) {
     return !isNaN(char) && char !== '.';
 }
 
-/** 
- * Processes a potential number starting at startCol in the schematic at the given row.
- * Build the number by concatenating adjacent numeric characters
- * Checks if the number is adjacent to a symbol.
-**/
-function processNumber(schematic, row, startCol) {
+/**
+ * Processes a number within a schematic, ensuring it is adjacent to a symbol.
+ * @param {Array<string>} schematic - The schematic represented as an array of strings.
+ * @param {number} row - The row index.
+ * @param {number} startCol - The starting column index of the number.
+ * @returns {number} The numeric value if valid, 0 otherwise.
+ */
+function extractValidNumber(schematic, row, startCol) {
     let number = '';
     let col = startCol;
 
-    // Concatenate all adjacent numeric characters to form the number
-    while (col < schematic[row].length && isNumber(schematic[row][col])) {
+    while (col < schematic[row].length && isNumericCharacter(schematic[row][col])) {
         number += schematic[row][col];
         col++;
     }
 
-    // Check if the number is adjacent to a symbol (either at start or end)
     if (isAdjacentToSymbol(schematic, row, startCol) || isAdjacentToSymbol(schematic, row, col - 1)) {
         return parseInt(number);
     }
@@ -42,26 +57,22 @@ function processNumber(schematic, row, startCol) {
 }
 
 /**
- * Check if cell at the specified row and col in the schematic is adjacent to a symbol. 
- * Looks at all neighboring cells, including diagonals.
-**/
+ * Checks if a cell in the schematic is adjacent to a symbol.
+ * @param {Array<string>} schematic - The schematic represented as an array of strings.
+ * @param {number} row - The row index of the cell.
+ * @param {number} col - The column index of the cell.
+ * @returns {boolean} True if adjacent to a symbol, false otherwise.
+ */
 function isAdjacentToSymbol(schematic, row, col) {
-    const rows = schematic.length;
-    const cols = schematic[0].length;
-
-    // Check each neighboring cell around the given cell
     for (let rowOffset = -1; rowOffset <= 1; rowOffset++) {
         for (let colOffset = -1; colOffset <= 1; colOffset++) {
-            // Skip the current cell
             if (rowOffset === 0 && colOffset === 0) continue;
 
             const adjacentRow = row + rowOffset;
             const adjacentCol = col + colOffset;
 
-            // Check if the neighboring cell is within range
-            if (adjacentRow >= 0 && adjacentRow < rows && adjacentCol >= 0 && adjacentCol < cols) {
-                // Return true if the neighboring cell is a symbol
-                if (isSymbol(schematic[adjacentRow][adjacentCol])) {
+            if (adjacentRow >= 0 && adjacentRow < schematic.length && adjacentCol >= 0 && adjacentCol < schematic[row].length) {
+                if (isSymbolCharacter(schematic[adjacentRow][adjacentCol])) {
                     return true;
                 }
             }
@@ -71,29 +82,21 @@ function isAdjacentToSymbol(schematic, row, col) {
 }
 
 /**
- * Calculate the sum of all valid numbers in the schematic.
- * Iterates through each cell
- * Processes potential numbers
- * Adds them to the sum if they are adjacent to a symbol.
-**/
-function sumPartNumbers(schematic) {
+ * Calculates the sum of all valid numbers in a schematic.
+ * @param {Array<string>} schematic - The schematic to process.
+ * @returns {number} The sum of all valid numbers in the schematic.
+ */
+function calculateSumOfValidNumbers(schematic) {
     let sum = 0;
 
-    // Iterate through each row and column of the schematic
     for (let row = 0; row < schematic.length; row++) {
-        let col = 0;
-        while (col < schematic[row].length) {
-            // If the current cell is a number, process it
-            if (isNumber(schematic[row][col])) {
-                sum += processNumber(schematic, row, col);
+        for (let col = 0; col < schematic[row].length; col++) {
+            if (isNumericCharacter(schematic[row][col])) {
+                sum += extractValidNumber(schematic, row, col);
 
-                // Skip past the rest of the number
-                while (col < schematic[row].length && isNumber(schematic[row][col])) {
+                while (col < schematic[row].length && isNumericCharacter(schematic[row][col])) {
                     col++;
                 }
-            } else {
-                // Move to the next cell if it's not a number
-                col++;
             }
         }
     }
@@ -101,5 +104,5 @@ function sumPartNumbers(schematic) {
     return sum;
 }
 
-const schematic = readSchematicFromFile('./puzzle-input.txt');
-console.log(sumPartNumbers(schematic));
+const schematicData = readLinesFromFile('./puzzle-input.txt');
+console.log(calculateSumOfValidNumbers(schematicData));

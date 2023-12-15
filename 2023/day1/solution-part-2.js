@@ -13,50 +13,47 @@ const digitWords = {
     nine: "9",
 };
 
-function extractDigits(line) {
-    const regex = /(?=(\d|one|two|three|four|five|six|seven|eight|nine))/g;
-    let m;
-    let foundDigits = [];
+/**
+ * Extracts and processes digits from a line, converting word digits to numbers.
+ * @param {string} line - A single line from the file.
+ * @returns {number} The computed value based on the extracted digits.
+ */
+function extractAndProcessDigits(line) {
+    const regex = new RegExp(Object.keys(digitWords).join('|') + '|\\d', 'g');
+    const matches = line.match(regex) || [];
 
-    while ((m = regex.exec(line)) !== null) {
-        // This is necessary to avoid infinite loops with zero-width matches
-        if (m.index === regex.lastIndex) {
-            regex.lastIndex++;
-        }
-        
-        // The result can be accessed through the `m`-variable.
-        m.forEach((match, groupIndex) => {
-            if(match){
-                foundDigits.push(match)
-            }
-        });
-    }
+    const digits = matches.map(match => digitWords[match] || match);
 
-    const digits = foundDigits.map((value) => digitWords[value] || value)
-    console.log(digits)
-
-    if (digits === null) {
+    if (digits.length === 0) {
         return 0;
     }
-
     if (digits.length === 1) {
-        return parseInt(digits[0] + digits[0]); // If only one digit is found, return it
+        return parseInt(digits[0] + digits[0], 10); // Duplicate if only one digit
     }
-    return parseInt(digits[0] + digits[digits.length - 1]); // Return the first and last digit
+    return parseInt(digits[0] + digits[digits.length - 1], 10); // Use first and last digit
 }
 
-async function processFile(filePath) {
-    const fileStream = fs.createReadStream(filePath);
-    const rl = readline.createInterface({
-        input: fileStream,
-        crlfDelay: Infinity,
-    });
-let result = 0
-    for await (const line of rl) {
-        const digits = extractDigits(line)
-        result += digits;
-        console.log(`Line: "${line}" - Digits:`, digits,"Sum:", result);
+/**
+ * Processes a file line by line and calculates a cumulative result based on digits.
+ * @param {string} filePath - The path to the file to be processed.
+ */
+async function processDigitsInFile(filePath) {
+    try {
+        const fileStream = fs.createReadStream(filePath);
+        const rl = readline.createInterface({
+            input: fileStream,
+            crlfDelay: Infinity,
+        });
+
+        let cumulativeResult = 0;
+        for await (const line of rl) {
+            const computedValue = extractAndProcessDigits(line);
+            cumulativeResult += computedValue;
+            console.log(`Line: "${line}" - Computed Value:`, computedValue, "Cumulative Sum:", cumulativeResult);
+        }
+    } catch (error) {
+        console.error('Error processing file:', error);
     }
 }
 
-processFile("./puzzle-input.txt");
+processDigitsInFile("./puzzle-input.txt");
