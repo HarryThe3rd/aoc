@@ -21,10 +21,10 @@ function computeIntersection(a, b) {
  */
 function calculateLineScore(line) {
     const [_, numbersString] = line.split(": ");
-    const [winningNumbersString, playNumbersString] = numbersString.split(" | ");
+    const [winningNumbersString, playerNumbersString] = numbersString.split(" | ");
 
     const winningNumbers = winningNumbersString.split(" ").map(n => parseInt(n, 10)).filter(n => !isNaN(n));
-    const playNumbers = playNumbersString.split(" ").map(n => parseInt(n, 10)).filter(n => !isNaN(n));
+    const playNumbers = playerNumbersString.split(" ").map(n => parseInt(n, 10)).filter(n => !isNaN(n));
 
     const intersection = computeIntersection(winningNumbers, playNumbers);
 
